@@ -1,0 +1,28 @@
+{
+  "name": "react-component-agent",
+  "version": "1.0.0",
+  "description": "simple react component AI agent",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "test": "bun run src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HandsomeWalker/react-component-agent.git"
+  },
+  "keywords": [
+    "react",
+    "ai",
+    "agent"
+  ],
+  "author": "dreamcreativehub@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HandsomeWalker/react-component-agent/issues"
+  },
+  "homepage": "https://github.com/HandsomeWalker/react-component-agent#readme",
+  "dependencies": {
+    "openai": "^4.86.2"
+  }
+}
