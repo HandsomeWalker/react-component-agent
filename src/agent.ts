@@ -3,6 +3,7 @@ import systemPrompts from "./prompts/system.ts";
 import { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs";
 import tools from "./tools";
 import readline from "readline";
+import ollama from "ollama";
 
 // 创建readline接口
 const rl = readline.createInterface({
@@ -15,6 +16,7 @@ interface AgentConfigProps {
   baseURL?: string;
   model?: string;
   fileDir?: string;
+  useOllama?: boolean;
 }
 interface ResponseProps {
   content: string;
@@ -25,6 +27,7 @@ export default class Agent {
   private apiKey = process.env.DASHSCOPE_API_KEY;
   private baseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
   private model = "deepseek-r1-distill-llama-70b";
+  private useOllama = false;
   private messages: ChatCompletionCreateParamsBase["messages"] = [
     {
       role: "system",
@@ -34,10 +37,13 @@ export default class Agent {
   private openai: OpenAI;
   private fileDir: string = `${process.cwd()}/aiComponents`;
   constructor(config?: AgentConfigProps) {
-    this.openai = new OpenAI({
-      apiKey: config?.apiKey ?? this.apiKey,
-      baseURL: config?.baseURL ?? this.baseURL,
-    });
+    if (!config?.useOllama) {
+      this.openai = new OpenAI({
+        apiKey: config?.apiKey ?? this.apiKey,
+        baseURL: config?.baseURL ?? this.baseURL,
+      });
+    }
+    config?.useOllama && (this.useOllama = config.useOllama);
     config?.model && (this.model = config.model);
     config?.fileDir && (this.fileDir = config.fileDir);
   }
@@ -128,6 +134,27 @@ export default class Agent {
     });
     return { content: answerContent, tools: this.getToolNames() };
   }
+  private async getOllamaResponse(userPrompts): Promise<ResponseProps> {
+    let answerContent = ""; // 定义完整回复
+    this.messages.push({
+      role: "user",
+      content: userPrompts,
+    });
+    const response = await ollama.chat({
+      model: this.model,
+      messages: this.messages as any,
+      stream: true,
+    });
+    for await (const part of response) {
+      process.stdout.write(part.message.content);
+      answerContent += part.message.content;
+    }
+    this.messages.push({
+      role: "assistant",
+      content: answerContent,
+    });
+    return { content: answerContent, tools: this.getToolNames() };
+  }
   private getToolNames() {
     const tools: string[] = [];
     const content = this.messages[this.messages.length - 1].content as string;
@@ -149,14 +176,24 @@ export default class Agent {
     }
   }
   async run() {
+    let response;
     while (true) {
       const requirement = await this.askQuestion();
-      const response = await this.getResponse(requirement);
+      if (this.useOllama) {
+        response = await this.getOllamaResponse(requirement);
+      } else {
+        response = await this.getResponse(requirement);
+      }
       await this.callTools(response);
     }
   }
   async runOnce(userPrompts: string) {
-    const response = await this.getResponse(userPrompts);
+    let response;
+    if (this.useOllama) {
+      response = await this.getOllamaResponse(userPrompts);
+    } else {
+      response = await this.getResponse(userPrompts);
+    }
     await this.callTools(response);
     rl.close();
   }

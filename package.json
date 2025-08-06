@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/HandsomeWalker/react-component-agent#readme",
   "dependencies": {
-    "openai": "^4.86.2"
+    "ollama": "^0.5.16",
+    "openai": "^4.104.0"
   }
 }

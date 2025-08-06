@@ -9,6 +9,8 @@
 const agent = new Agent({ apiKey: 'your api key' });
 ```
 
+如果使用`ollama`本地模型则无需配置API_KEY和baseURL。
+
 # 说明
 
 理论上可以使用所有openai兼容的模型，只需要配置不同的API_KEY和BASE_URL。
@@ -26,10 +28,21 @@ const agent = new Agent({
 agent.run();
 ```
 
+# ollama
+
+```typescript
+const agent = new Agent({
+  useOllama: true,
+  model: "qwen3:14b",
+  fileDir: `${process.cwd()}/generated`,
+});
+
+agent.run();
+```
+
 自行修改`index.ts`文件后，可以使用bun或者deno直接运行ts文件。
-需要安装openai依赖
 
 ```bash
-bun install openai
+bun install
 bun run test
 ```
